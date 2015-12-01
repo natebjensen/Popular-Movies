@@ -2,20 +2,24 @@ package com.oneupdog.popularmovies;
 
 import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.TextView;
+import android.widget.ImageView;
+
+import com.oneupdog.popularmovies.model.MovieData;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by nbjensen on 11/23/15.
  */
 public class GridViewAdapter extends ArrayAdapter {
 
+    private static final String  TAG = GridViewAdapter.class.getSimpleName();
     private final Context context;
     private final int resourceId;
     private ArrayList data = new ArrayList();
@@ -28,7 +32,7 @@ public class GridViewAdapter extends ArrayAdapter {
     }
 
     static class ViewHolder {
-        TextView titleView;
+        ImageView imageView;
     }
 
     @Override
@@ -40,15 +44,22 @@ public class GridViewAdapter extends ArrayAdapter {
             LayoutInflater inflater = ((Activity) context).getLayoutInflater();
             row = inflater.inflate(resourceId, parent, false);
             holder = new ViewHolder();
-            holder.titleView = (TextView) row.findViewById(R.id.text);
+            holder.imageView = (ImageView) row.findViewById(R.id.poster);
+            holder.imageView.setAdjustViewBounds(true);
             row.setTag(holder);
         }  else {
             holder = (ViewHolder) row.getTag();
         }
 
-        String item = (String) data.get(position);
-        holder.titleView.setText(item);
+        MovieData movieData = (MovieData) data.get(position);
+        String link = buildLink(movieData.getPosterPath());
+        Log.d(TAG, "link: "+ link);
+        Picasso.with(context).load(link).into(holder.imageView);
 
         return row;
+    }
+
+    private String buildLink(String posterPath) {
+        return "http://image.tmdb.org/t/p/w185" + posterPath;
     }
 }
