@@ -20,8 +20,10 @@ import java.util.ArrayList;
 public class GridViewAdapter extends ArrayAdapter {
 
     private static final String  TAG = GridViewAdapter.class.getSimpleName();
-    private final Context context;
-    private final int resourceId;
+    private Context context;
+    private int resourceId;
+    private int width;
+    private boolean mTwoPane;
     private ArrayList data = new ArrayList();
 
     public GridViewAdapter(Context context, int resource, ArrayList data) {
@@ -29,6 +31,9 @@ public class GridViewAdapter extends ArrayAdapter {
         this.resourceId = resource;
         this.context = context;
         this.data = data;
+        this.width= context.getResources().getDisplayMetrics().widthPixels;
+
+        Log.d(TAG, "Curreent width is: "+ width);
     }
 
     static class ViewHolder {
@@ -53,13 +58,14 @@ public class GridViewAdapter extends ArrayAdapter {
 
         MovieData movieData = (MovieData) data.get(position);
         String link = buildLink(movieData.getPosterPath());
-        Log.d(TAG, "link: "+ link);
+        Log.d(TAG, "link: " + link);
         Picasso.with(context).load(link).into(holder.imageView);
 
         return row;
     }
 
     private String buildLink(String posterPath) {
-        return "http://image.tmdb.org/t/p/w185" + posterPath;
+        //"w92", "w154", "w185", "w342", "w500", "w780", or "original"
+        return "http://image.tmdb.org/t/p/w92" + posterPath;
     }
 }

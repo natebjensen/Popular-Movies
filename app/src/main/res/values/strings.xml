@@ -1,6 +1,17 @@
 <resources>
     <string name="app_name">Popular Movies</string>
     <string name="action_settings">Settings</string>
+    <string name="details_label">Movie Details</string>
 
-    <string name="action_refresh" translatable="false">Refresh</string>
+    <string name="pref_sortby_label">Sort by</string>
+    <string name="pref_sort_label_mostpopular">Most Popular</string>
+    <string name="pref_sort_label_toprated">Top Rated</string>
+
+    <!-- Key name for pref sort key in SharedPreferences -->
+    <string name="pref_sort_key" translatable="false">sort</string>
+
+    <!-- Value in SharedPreferences  -->
+    <string name="pref_value_mostpopular" translatable="false">popularity.desc</string>
+    <string name="pref_value_toprated" translatable="false">vote_average.desc</string>
+
 </resources>

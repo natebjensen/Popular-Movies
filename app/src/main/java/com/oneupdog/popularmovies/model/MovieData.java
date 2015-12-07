@@ -23,17 +23,20 @@ package com.oneupdog.popularmovies.model;
  //            "vote_count": 1745
  // **/
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Date;
 
-public class MovieData {
+public class MovieData implements Parcelable {
 
 
     private boolean adult;
     private String backDropPath;
-    private int[] genreIds;
+    //private int[] genreIds = new int[0];
     private long id;
     private String originalLanguage;
     private String originalTitle;
@@ -73,9 +76,9 @@ public class MovieData {
         return backDropPath;
     }
 
-    public int[] getGenreIds() {
-        return genreIds;
-    }
+//    public int[] getGenreIds() {
+//        return genreIds;
+//    }
 
     public long getId() {
         return id;
@@ -121,5 +124,70 @@ public class MovieData {
         return voteCount;
     }
 
+    //Make the objecct Parceble
 
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    /**
+     * Wtite object to parcel
+     * @param dest
+     * @param flags
+     */
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(adult ? 1 : 0);
+        dest.writeString(backDropPath);
+        //dest.writeInt(genreIds.length);
+        //dest.writeIntArray(genreIds);
+        dest.writeLong(id);
+        dest.writeString(originalLanguage);
+        dest.writeString(originalTitle);
+        dest.writeString(overview);
+        dest.writeString(releaseDate);
+        dest.writeString(posterPath);
+        dest.writeDouble(popularity);
+        dest.writeString(title);
+        dest.writeInt(video ? 1 : 0);
+        dest.writeDouble(voteAverage);
+        dest.writeLong(voteCount);
+    }
+
+    /** Static field used to regenerate object, individually or as arrays */
+    public static final Parcelable.Creator<MovieData> CREATOR = new Parcelable.Creator<MovieData>() {
+        public MovieData createFromParcel(Parcel in) {
+            return new MovieData(in);
+        }
+        public MovieData[] newArray(int size) {
+            return new MovieData[size];
+        }
+    };
+
+    /**
+     * Constructor for parcel
+     *
+     * @param in
+     */
+
+    public MovieData(Parcel in) {
+
+        adult = (in.readInt() == 1) ? true : false;
+        backDropPath = in.readString();
+        //genreIds = new int[in.readInt()];
+        //in.readIntArray(genreIds);
+        id = in.readLong();
+        originalLanguage = in.readString();
+        originalTitle = in.readString();
+        overview = in.readString();
+        releaseDate = in.readString();
+        posterPath = in.readString();
+        popularity = in.readDouble();
+        title = in.readString();
+        video = (in.readInt() == 1) ? true : false;
+        voteAverage = in.readDouble();
+        voteCount = in.readLong();
+
+    }
 }

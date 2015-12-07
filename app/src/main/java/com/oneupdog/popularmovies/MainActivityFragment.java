@@ -1,5 +1,7 @@
 package com.oneupdog.popularmovies;
 
+import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
@@ -11,10 +13,13 @@ import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.GridView;
+import android.widget.Spinner;
+import android.widget.SpinnerAdapter;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import com.oneupdog.popularmovies.BuildConfig;
 import com.oneupdog.popularmovies.model.MovieData;
 
 import org.json.JSONArray;
@@ -33,10 +38,11 @@ import java.util.ArrayList;
 /**
  * MainActivity fragment containing the gridview.
  */
-public class MainActivityFragment extends Fragment {
+public class MainActivityFragment extends Fragment implements AdapterView.OnItemSelectedListener {
 
     private final static String TAG = "MainActivityFragment";
     private GridViewAdapter adapter;
+    private boolean mTwoPane;
 
     public MainActivityFragment() {
     }
@@ -44,13 +50,29 @@ public class MainActivityFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Log.d(TAG, "onCreate");
         // Add this line in order for this fragment to handle menu events.
         setHasOptionsMenu(true);
     }
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.main_fragmeny, menu);
+        inflater.inflate(R.menu.main_fragment, menu);
+
+        //find spinner
+        Spinner spinner = (Spinner) menu.findItem(R.id.action_sort).getActionView();
+
+        //  create the adapter from a StringArray
+        SpinnerAdapter mSpinnerAdapter = ArrayAdapter.createFromResource(getContext(),
+                R.array.pref_sort_options,
+                R.layout.spinner_item_layout);
+        spinner.setAdapter(mSpinnerAdapter);
+
+        int pos = Utils.getSortSelection(getContext());
+        spinner.setSelection(pos);
+
+        spinner.setOnItemSelectedListener(this);
     }
 
 
@@ -59,6 +81,12 @@ public class MainActivityFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_main, container, false);
+
+        int screenWidth = view.getWidth();
+        int screenHeight = view.getHeight();
+        Log.i("MyActivity", "screenWidth: " + screenWidth + ", screenHeight: " +screenHeight);
+        Log.d(TAG, "Two mane is enabled: "+mTwoPane);
+
         GridView gridView = (GridView) view.findViewById(R.id.gridview_popular);
 
         ArrayList list = new ArrayList();
@@ -69,16 +97,42 @@ public class MainActivityFragment extends Fragment {
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v,
                                     int position, long id) {
-                Toast.makeText(getActivity(), "" + position,
-                        Toast.LENGTH_SHORT).show();
+                showDetails(position);
             }
         });
 
-        //"popularity.desc"
-        FetchPopularMoviesTask task = new FetchPopularMoviesTask();
-        task.execute("popularity.desc");
+        fetchMovieInfo(getActivity());
 
         return view;
+    }
+
+    public void fetchMovieInfo(Context context) {
+
+        FetchPopularMoviesTask task = new FetchPopularMoviesTask();
+        task.execute(Utils.getCurrentSortValue(context));
+    }
+
+    public void onSortKeyChange() {
+
+        fetchMovieInfo(getActivity());
+
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+
+        if (parent instanceof Spinner) {
+            Utils.setSortValue(getContext(), position);
+            onSortKeyChange();
+        }
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+    }
+
+    public void setDualPane(boolean twoPane) {
+        mTwoPane = twoPane;
     }
 
     public class FetchPopularMoviesTask extends AsyncTask<String, Void, MovieData[]> {
@@ -91,7 +145,6 @@ public class MainActivityFragment extends Fragment {
             if (params.length == 0) {
                 return null;
             }
-
 
             HttpURLConnection urlConnection = null;
             BufferedReader reader = null;
@@ -138,7 +191,7 @@ public class MainActivityFragment extends Fragment {
                 movieJsonStr = buffer.toString();
                 Log.d(LOG_TAG, movieJsonStr);
             } catch (IOException e) {
-                Log.e(LOG_TAG, "Error ", e);
+                Log.e(LOG_TAG, "IOEXception Error ", e.getCause());
                 return null;
             } finally {
                 if (urlConnection != null) {
@@ -157,7 +210,7 @@ public class MainActivityFragment extends Fragment {
             try {
                 return getPopMoviesFromJason(movieJsonStr);
             } catch (JSONException e) {
-                Log.d(LOG_TAG, "JsonException: "+e.toString());
+                Log.d(LOG_TAG, "JsonException: " + e.toString());
                 e.printStackTrace();
             }
 
@@ -168,32 +221,56 @@ public class MainActivityFragment extends Fragment {
         @Override
         protected void onPostExecute(MovieData[] results) {
 
-            if(results == null) {
+            if (results == null) {
+                Log.d(LOG_TAG, "Didnt return movie data, results are null...");
                 return;
             }
 
-            for(int i =0; i < results.length; i++)
+            adapter.clear();
+            for (int i = 0; i < results.length; i++)
                 adapter.add(results[i]);
             adapter.notifyDataSetChanged();
         }
+
+        private MovieData[] getPopMoviesFromJason(String movieJsonStr) throws JSONException {
+
+            Log.d(TAG, "getJsondata");
+            JSONObject moviesJasonObject = new JSONObject(movieJsonStr);
+            JSONArray arrayMovies = moviesJasonObject.getJSONArray("results");
+
+            int cnt = arrayMovies.length();
+            MovieData[] resultStrs = new MovieData[cnt];
+
+            for (int i = 0; i < cnt; i++) {
+                JSONObject jsonObject = arrayMovies.getJSONObject(i);
+                MovieData movieData = new MovieData(jsonObject);
+                resultStrs[i] = movieData;
+            }
+
+            return resultStrs;
+        }
     }
 
+    private void showDetails(int position) {
 
-   private MovieData[] getPopMoviesFromJason(String movieJsonStr) throws JSONException {
+        MovieData movieData = (MovieData)adapter.getItem(position);
 
-        Log.d(TAG, "getJsondata");
-        JSONObject moviesJasonObject = new JSONObject(movieJsonStr);
-        JSONArray arrayMovies = moviesJasonObject.getJSONArray("results");
+        if (mTwoPane) {
 
-        int cnt = arrayMovies.length();
-       MovieData[] resultStrs = new MovieData[cnt];
-
-        for(int i=0; i < cnt; i++){
-            JSONObject jsonObject = arrayMovies.getJSONObject(i);
-            MovieData movieData = new MovieData(jsonObject);
-            resultStrs[i] = movieData;
+            Log.d(TAG, "Dual pane is enabled");
+            DetailsActivityFragment fragment = (DetailsActivityFragment)getFragmentManager().findFragmentById(R.id.fragment_details);
+            if(fragment != null) {
+                fragment.setmMovieData(movieData);
+            }
+        } else {
+            Intent intent = new Intent(getActivity(), DetailsActivity.class);
+            intent.putExtra(Constants.MOVIE_DATA, movieData);
+            startActivity(intent);
         }
 
-        return resultStrs;
+        Fragment fragment = getFragmentManager().findFragmentById(R.id.fragment_details);
+        if(fragment == null) {
+
+        }
     }
 }
