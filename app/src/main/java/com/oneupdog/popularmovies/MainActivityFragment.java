@@ -146,6 +146,9 @@ public class MainActivityFragment extends Fragment implements AdapterView.OnItem
                 return null;
             }
 
+            //getActivity().getResources().getString(R.string.app_name);
+
+
             HttpURLConnection urlConnection = null;
             BufferedReader reader = null;
 
