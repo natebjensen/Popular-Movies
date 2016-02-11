@@ -32,6 +32,10 @@
             android:parentActivityName=".MainActivity"
             android:theme="@style/SettingsTheme">
         </activity>
+        <provider
+            android:authorities="com.oneupdog.popularmovies.app"
+            android:name=".data.MovieProvider">
+        </provider>
     </application>
 
 </manifest>

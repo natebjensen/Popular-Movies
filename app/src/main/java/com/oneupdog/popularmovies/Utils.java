@@ -5,6 +5,10 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+
 /**
  * Created by nbjensen on 12/3/15.
  */
@@ -64,5 +68,13 @@ public class Utils {
 
     public static String buildLink(String posterPath) {
         return "http://image.tmdb.org/t/p/w150" + posterPath;
+    }
+
+    public static String convertToDate(long time) {
+
+        Date date = new Date(time);
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+
+        return df.format(date);
     }
 }

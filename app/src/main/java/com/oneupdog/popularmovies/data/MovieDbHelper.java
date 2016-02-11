@@ -13,6 +13,22 @@ public class MovieDbHelper extends SQLiteOpenHelper {
     // If you change the database schema, you must increment the database version.
     private static final int DATABASE_VERSION = 1;
 
+    public static int COL_ID = 0;
+    public static int COL_MOVIE_ID = 1;
+    public static int COL_MOVIE_DATE = 2;
+    public static int COL_MOVIE_ORIG_LANG = 3;
+    public static int COL_MOVIE_OVERVIEW = 4;
+    public static int COL_MOVIE_ORIG_TITLE = 5;
+    public static int COL_MOVIE_POPULARITY = 6;
+    public static int COL_MOVIE_POSTER_PATH = 7;
+    public static int COL_MOVIE_TITLE = 8;
+    public static int COL_MOVIE_VIDEO = 9;
+    public static int COL_MOVIE_VOTE_AVE = 10;
+    public static int COL_MOVIE_VOTE_COUNT = 11;
+    public static int COL_MOVIE_ADULT = 12;
+    public static int COL_BACKDROP_PATH = 13;
+
+
     static final String DATABASE_NAME = "popmovies.db";
 
     public MovieDbHelper(Context context) {

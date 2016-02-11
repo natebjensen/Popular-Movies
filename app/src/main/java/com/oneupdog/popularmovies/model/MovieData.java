@@ -23,17 +23,20 @@ package com.oneupdog.popularmovies.model;
  //            "vote_count": 1745
  // **/
 
+import android.database.Cursor;
 import android.os.Parcel;
 import android.os.Parcelable;
+
+import com.oneupdog.popularmovies.Utils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Date;
+import static com.oneupdog.popularmovies.data.MovieDbHelper.*;
 
 public class MovieData implements Parcelable {
 
-
+    private long _id; // row ID in database
     private boolean adult;
     private String backDropPath;
     //private int[] genreIds = new int[0];
@@ -66,6 +69,24 @@ public class MovieData implements Parcelable {
         voteAverage = json.getDouble("vote_average");
         voteCount = json.getLong("vote_count");
 
+    }
+
+    public MovieData(Cursor cursor) {
+        _id = cursor.getInt(COL_ID);
+        adult = (cursor.getInt(COL_MOVIE_ADULT) == 1);
+        backDropPath = cursor.getString(COL_BACKDROP_PATH);
+        id = cursor.getInt(COL_MOVIE_ID);
+        originalLanguage = cursor.getString(COL_MOVIE_ORIG_LANG);
+        originalTitle = cursor.getString(COL_MOVIE_ORIG_TITLE);
+        overview = cursor.getString(COL_MOVIE_OVERVIEW);
+        long date = cursor.getLong(COL_MOVIE_DATE);
+        releaseDate = Utils.convertToDate(date);
+        posterPath = cursor.getString(COL_MOVIE_POSTER_PATH);
+        popularity = cursor.getDouble(COL_MOVIE_POPULARITY);
+        title = cursor.getString(COL_MOVIE_TITLE);
+        video = (cursor.getInt(COL_MOVIE_VIDEO) == 1);
+        voteAverage = cursor.getDouble(COL_MOVIE_VIDEO);
+        voteCount = cursor.getLong(COL_MOVIE_VOTE_COUNT);
     }
 
     public boolean isAdult() {
@@ -185,7 +206,7 @@ public class MovieData implements Parcelable {
         posterPath = in.readString();
         popularity = in.readDouble();
         title = in.readString();
-        video = (in.readInt() == 1) ? true : false;
+        video = (in.readInt() == 1);
         voteAverage = in.readDouble();
         voteCount = in.readLong();
 

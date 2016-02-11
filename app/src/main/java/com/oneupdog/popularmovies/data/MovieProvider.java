@@ -7,6 +7,11 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.support.annotation.Nullable;
+import android.text.format.DateFormat;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Created by nbjensen on 12/8/15.
@@ -86,7 +91,7 @@ public class MovieProvider extends ContentProvider {
 
         switch (match) {
             case Movie: {
-                normalizeDate(values);
+                convertDate(values);
                 long _id = db.insert(MovieContract.MovieEntry.TABLE_NAME, null, values);
                 if ( _id > 0 )
                     returnUri = MovieContract.MovieEntry.buildMovieUri(_id);
@@ -122,11 +127,16 @@ public class MovieProvider extends ContentProvider {
         return rowsDeleted;
     }
 
-    private void normalizeDate(ContentValues values) {
-        // normalize the date value
+    private void convertDate(ContentValues values) {
         if (values.containsKey(MovieContract.MovieEntry.COLUMN_DATE)) {
-            long dateValue = values.getAsLong(MovieContract.MovieEntry.COLUMN_DATE);
-            values.put(MovieContract.MovieEntry.COLUMN_DATE, MovieContract.normalizeDate(dateValue));
+            String sdate = (String)values.get(MovieContract.MovieEntry.COLUMN_DATE);
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+            try {
+                Date date = df.parse(sdate);
+                values.put(MovieContract.MovieEntry.COLUMN_DATE, date.getTime());
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -138,7 +148,7 @@ public class MovieProvider extends ContentProvider {
 
             switch (match) {
                 case Movie:
-                    normalizeDate(values);
+                    convertDate(values);
                     rowsUpdated = db.update(MovieContract.MovieEntry.TABLE_NAME, values, selection,
                             selectionArgs);
                     break;
@@ -161,7 +171,7 @@ public class MovieProvider extends ContentProvider {
                 int returnCount = 0;
                 try {
                     for (ContentValues value : values) {
-                        normalizeDate(value);
+                        convertDate(value);
                         long _id = db.insert(MovieContract.MovieEntry.TABLE_NAME, null, value);
                         if (_id != -1) {
                             returnCount++;

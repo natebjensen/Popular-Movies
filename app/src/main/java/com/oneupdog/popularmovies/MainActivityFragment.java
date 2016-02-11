@@ -1,11 +1,16 @@
 package com.oneupdog.popularmovies;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -20,6 +25,7 @@ import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.oneupdog.popularmovies.data.MovieContract;
 import com.oneupdog.popularmovies.model.MovieData;
 
 import org.json.JSONArray;
@@ -33,16 +39,18 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Vector;
 
 
 /**
  * MainActivity fragment containing the gridview.
  */
-public class MainActivityFragment extends Fragment implements AdapterView.OnItemSelectedListener {
+public class MainActivityFragment extends Fragment implements AdapterView.OnItemSelectedListener, LoaderManager.LoaderCallbacks<Cursor> {
 
     private final static String TAG = "MainActivityFragment";
-    private GridViewAdapter adapter;
+    //private GridViewAdapter adapter;
     private boolean mTwoPane;
+    private GridCursorAdapter adapter;
 
     public MainActivityFragment() {
     }
@@ -89,11 +97,11 @@ public class MainActivityFragment extends Fragment implements AdapterView.OnItem
 
         GridView gridView = (GridView) view.findViewById(R.id.gridview_popular);
 
-        ArrayList list = new ArrayList();
+        //ArrayList list = new ArrayList();
+        //adapter = new GridViewAdapter(getActivity(), R.layout.grid_item_layout, list);
 
-        adapter = new GridViewAdapter(getActivity(), R.layout.grid_item_layout, list);
+        adapter = new GridCursorAdapter(getActivity(), null, 0);
         gridView.setAdapter(adapter);
-
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v,
                                     int position, long id) {
@@ -104,6 +112,12 @@ public class MainActivityFragment extends Fragment implements AdapterView.OnItem
         fetchMovieInfo(getActivity());
 
         return view;
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        getLoaderManager().initLoader(0, null, this);
     }
 
     public void fetchMovieInfo(Context context) {
@@ -133,6 +147,32 @@ public class MainActivityFragment extends Fragment implements AdapterView.OnItem
 
     public void setDualPane(boolean twoPane) {
         mTwoPane = twoPane;
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        // Sort order:  Ascending, by date.
+        String sortOrder = MovieContract.MovieEntry.COLUMN_POPULARITY + " ASC";
+
+        Uri moviePopUri = MovieContract.MovieEntry.CONTENT_URI;
+
+        return new CursorLoader(getActivity(),
+                moviePopUri,
+                null,
+                null,
+                null,
+                sortOrder);
+
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        adapter.swapCursor(data);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        adapter.swapCursor(null);
     }
 
     public class FetchPopularMoviesTask extends AsyncTask<String, Void, MovieData[]> {
@@ -229,10 +269,10 @@ public class MainActivityFragment extends Fragment implements AdapterView.OnItem
                 return;
             }
 
-            adapter.clear();
-            for (int i = 0; i < results.length; i++)
-                adapter.add(results[i]);
-            adapter.notifyDataSetChanged();
+//            adapter.clear();
+//            for (int i = 0; i < results.length; i++)
+//                adapter.add(results[i]);
+//            adapter.notifyDataSetChanged();
         }
 
         private MovieData[] getPopMoviesFromJason(String movieJsonStr) throws JSONException {
@@ -241,14 +281,47 @@ public class MainActivityFragment extends Fragment implements AdapterView.OnItem
             JSONObject moviesJasonObject = new JSONObject(movieJsonStr);
             JSONArray arrayMovies = moviesJasonObject.getJSONArray("results");
 
-            int cnt = arrayMovies.length();
-            MovieData[] resultStrs = new MovieData[cnt];
+            Vector<ContentValues> movieVector = new Vector<ContentValues>(arrayMovies
+                    .length());
 
-            for (int i = 0; i < cnt; i++) {
+            MovieData[] resultStrs = new MovieData[arrayMovies.length()];
+
+            for (int i = 0; i < arrayMovies.length(); i++) {
                 JSONObject jsonObject = arrayMovies.getJSONObject(i);
                 MovieData movieData = new MovieData(jsonObject);
                 resultStrs[i] = movieData;
+
+                ContentValues values = new ContentValues();
+                values.put(MovieContract.MovieEntry.COLUMN_ADULT, movieData.isAdult());
+                values.put(MovieContract.MovieEntry.COLUMN_BACKDROP_PATH, movieData.getBackDropPath());
+                values.put(MovieContract.MovieEntry.COLUMN_DATE, movieData.getReleaseDate());
+                values.put(MovieContract.MovieEntry.COLUMN_MOVIE_ID, movieData.getId());
+                values.put(MovieContract.MovieEntry.COLUMN_ORIG_LANG, movieData.getOriginalLanguage());
+                values.put(MovieContract.MovieEntry.COLUMN_ORIG_TITLE, movieData.getOriginalTitle());
+                values.put(MovieContract.MovieEntry.COLUMN_OVERVIEW, movieData.getOverview());
+                values.put(MovieContract.MovieEntry.COLUMN_POPULARITY, movieData.getPopularity());
+                values.put(MovieContract.MovieEntry.COLUMN_POSTER_PATH, movieData.getPosterPath());
+                values.put(MovieContract.MovieEntry.COLUMN_TITLE, movieData.getTitle());
+                values.put(MovieContract.MovieEntry.COLUMN_VIDEO, movieData.isVideo());
+                values.put(MovieContract.MovieEntry.COLUMN_VOTE_AVE, movieData.getVoteAverage());
+                values.put(MovieContract.MovieEntry.COLUMN_VOTE_COUNT, movieData.getVoteCount());
+
+                movieVector.add(values);
             }
+
+
+            int inserted = 0;
+            // add to database
+            if ( movieVector.size() > 0 ) {
+                ContentValues[] cvArray = new ContentValues[movieVector.size()];
+                movieVector.toArray(cvArray);
+                getContext().getContentResolver().bulkInsert(MovieContract.MovieEntry.CONTENT_URI, cvArray);
+
+                //notifyWeather();
+            }
+
+            Log.d(LOG_TAG, "Sync Complete. " + movieVector.size() + " Inserted");
+
 
             return resultStrs;
         }
