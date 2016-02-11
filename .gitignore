@@ -42,3 +42,6 @@ project.properties
 .gradle
 build/
 
+#Gradle-properites
+gradle.properties
+
