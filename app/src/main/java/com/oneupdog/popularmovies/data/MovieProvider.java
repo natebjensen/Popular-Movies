@@ -23,6 +23,8 @@ public class MovieProvider extends ContentProvider {
     private MovieDbHelper mOpenHelper;
 
     static final int Movie = 100;
+    static final int FAVORITE = 101;
+    static final int MovieAndFav = 102;
 
 
     static UriMatcher buildUriMatcher() {
@@ -31,6 +33,8 @@ public class MovieProvider extends ContentProvider {
 
         // For each type of URI , create a corresponding code.
         matcher.addURI(authority, MovieContract.PATH_MOVIE, Movie);
+        matcher.addURI(authority, MovieContract.PATH_FAV, FAVORITE);
+        matcher.addURI(authority, MovieContract.PATH_MOVIE_FAV, MovieAndFav);
         return matcher;
     }
 
@@ -59,6 +63,28 @@ public class MovieProvider extends ContentProvider {
                 );
                 break;
             }
+            case MovieAndFav: {
+                //String sql = "Select * from "+ MovieContract.MovieEntry.TABLE_NAME+ " left join "+
+                //        MovieContract.FavMovieEntry.TABLE_NAME +
+                //        " on " + MovieContract.MovieEntry.TABLE_NAME +"."+ MovieContract.MovieEntry.COLUMN_MOVIE_ID +
+                //        " = " + MovieContract.FavMovieEntry.TABLE_NAME +"."+ MovieContract.FavMovieEntry.COLUMN_FAV_ID;
+                String sql = "Select * from movies A left join favorites B ON A.movie_id = B.favorite_movie_id;";
+                retCursor = mOpenHelper.getReadableDatabase().rawQuery(sql, null);
+
+                break;
+            }
+            case FAVORITE: {
+                retCursor = mOpenHelper.getReadableDatabase().query(
+                        MovieContract.FavMovieEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder
+                );
+                break;
+            }
 
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
@@ -77,6 +103,8 @@ public class MovieProvider extends ContentProvider {
         switch (match) {
             case Movie:
                 return MovieContract.MovieEntry.CONTENT_TYPE;
+            case FAVORITE:
+                return MovieContract.FavMovieEntry.CONTENT_TYPE;
         }
 
         return null;
@@ -93,6 +121,15 @@ public class MovieProvider extends ContentProvider {
             case Movie: {
                 convertDate(values);
                 long _id = db.insert(MovieContract.MovieEntry.TABLE_NAME, null, values);
+                if ( _id > 0 )
+                    returnUri = MovieContract.MovieEntry.buildMovieUri(_id);
+                else
+                    throw new android.database.SQLException("Failed to insert row into " + uri);
+                break;
+            }
+            case FAVORITE: {
+                convertDate(values);
+                long _id = db.insert(MovieContract.FavMovieEntry.TABLE_NAME, null, values);
                 if ( _id > 0 )
                     returnUri = MovieContract.MovieEntry.buildMovieUri(_id);
                 else
@@ -116,6 +153,10 @@ public class MovieProvider extends ContentProvider {
             case Movie:
                 rowsDeleted = db.delete(
                         MovieContract.MovieEntry.TABLE_NAME, selection, selectionArgs);
+                break;
+            case FAVORITE:
+                rowsDeleted = db.delete(
+                        MovieContract.FavMovieEntry.TABLE_NAME, selection, selectionArgs);
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
@@ -150,6 +191,10 @@ public class MovieProvider extends ContentProvider {
                 case Movie:
                     convertDate(values);
                     rowsUpdated = db.update(MovieContract.MovieEntry.TABLE_NAME, values, selection,
+                            selectionArgs);
+                    break;
+                case FAVORITE:
+                    rowsUpdated = db.update(MovieContract.FavMovieEntry.TABLE_NAME, values, selection,
                             selectionArgs);
                     break;
                 default:

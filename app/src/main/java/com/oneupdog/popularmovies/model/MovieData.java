@@ -28,6 +28,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.oneupdog.popularmovies.Utils;
+import com.oneupdog.popularmovies.data.MovieContract;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -51,7 +52,7 @@ public class MovieData implements Parcelable {
     private boolean video;
     private double voteAverage;
     private long voteCount;
-
+    private boolean favorite;
 
     public MovieData(JSONObject json) throws JSONException {
         adult = json.getBoolean("adult");
@@ -85,7 +86,7 @@ public class MovieData implements Parcelable {
         popularity = cursor.getDouble(COL_MOVIE_POPULARITY);
         title = cursor.getString(COL_MOVIE_TITLE);
         video = (cursor.getInt(COL_MOVIE_VIDEO) == 1);
-        voteAverage = cursor.getDouble(COL_MOVIE_VIDEO);
+        voteAverage = cursor.getDouble(COL_MOVIE_VOTE_AVE);
         voteCount = cursor.getLong(COL_MOVIE_VOTE_COUNT);
     }
 
@@ -144,6 +145,13 @@ public class MovieData implements Parcelable {
     public long getVoteCount() {
         return voteCount;
     }
+
+    public boolean isFavorite() { return favorite; }
+
+    public void setFavorite(boolean favorite) {
+        this.favorite = favorite;
+    }
+
 
     //Make the objecct Parceble
 

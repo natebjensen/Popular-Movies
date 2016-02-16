@@ -6,6 +6,7 @@
     <string name="pref_sortby_label">Sort by</string>
     <string name="pref_sort_label_mostpopular">Most Popular</string>
     <string name="pref_sort_label_toprated">Top Rated</string>
+    <string name="pref_sort_label_favorites">Favorites</string>
 
     <!-- Key name for pref sort key in SharedPreferences -->
     <string name="pref_sort_key" translatable="false">sort</string>
@@ -13,5 +14,6 @@
     <!-- Value in SharedPreferences  -->
     <string name="pref_value_mostpopular" translatable="false">popularity.desc</string>
     <string name="pref_value_toprated" translatable="false">vote_average.desc</string>
+    <string name="pref_value_favorites" translatable="false">favorites</string>
 
 </resources>

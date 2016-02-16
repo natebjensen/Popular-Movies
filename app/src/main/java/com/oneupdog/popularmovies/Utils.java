@@ -1,9 +1,15 @@
 package com.oneupdog.popularmovies;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ListAdapter;
+import android.widget.ListView;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -26,7 +32,7 @@ public class Utils {
     }
 
     public static void setCurrentSortValue(Context context, String value) {
-        if(value == null) {
+        if (value == null) {
             return;
         }
 
@@ -38,17 +44,19 @@ public class Utils {
 
 
     public static int getSortSelection(Context context) {
-        int retValue =0;
+        int retValue = 0;
 
         String value = getCurrentSortValue(context);
 
-        if(value == null)
+        if (value == null)
             return retValue;
 
-        if(value.equals((context.getString(R.string.pref_value_mostpopular)))) {
+        if (value.equals((context.getString(R.string.pref_value_mostpopular)))) {
             retValue = 0;
-        } else if(value.equals((context.getString(R.string.pref_value_toprated)))) {
+        } else if (value.equals((context.getString(R.string.pref_value_toprated)))) {
             retValue = 1;
+        } else if (value.equals(("favorites"))) {
+            retValue = 2;
         }
 
         return retValue;
@@ -57,10 +65,12 @@ public class Utils {
     public static void setSortValue(Context context, int position) {
         String value = context.getString(R.string.pref_value_mostpopular);
 
-        if(position == 0) {
+        if (position == 0) {
             value = context.getString(R.string.pref_value_mostpopular);
-        } else if(position == 1) {
+        } else if (position == 1) {
             value = context.getString(R.string.pref_value_toprated);
+        } else if (position == 2) {
+            value = "favorites";
         }
 
         setCurrentSortValue(context, value);
@@ -76,5 +86,33 @@ public class Utils {
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 
         return df.format(date);
+    }
+
+    public static void setListViewHeightBasedOnChildren(ListView listView) {
+        ListAdapter listAdapter = listView.getAdapter();
+        if (listAdapter == null) {
+            // pre-condition
+            return;
+        }
+
+        int totalHeight = 0;
+        int desiredWidth = View.MeasureSpec.makeMeasureSpec(listView.getWidth(), View.MeasureSpec.AT_MOST);
+        for (int i = 0; i < listAdapter.getCount(); i++) {
+            View listItem = listAdapter.getView(i, null, listView);
+            listItem.measure(desiredWidth, View.MeasureSpec.UNSPECIFIED);
+            totalHeight += listItem.getMeasuredHeight();
+        }
+
+        ViewGroup.LayoutParams params = listView.getLayoutParams();
+        params.height = totalHeight + (listView.getDividerHeight() * (listAdapter.getCount() - 1));
+        listView.setLayoutParams(params);
+        listView.requestLayout();
+    }
+
+    public static void playYouTubeVideo(Context context, String videoId) {
+        //context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.youtube.com/watch?v="+video)));
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:"+videoId));
+        intent.putExtra("VIDEO_ID", videoId);
+        context.startActivity(intent);
     }
 }
